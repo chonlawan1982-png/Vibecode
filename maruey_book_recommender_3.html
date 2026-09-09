@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maruey Book Match — โปรแกรมแนะนำหนังสือจากห้องสมุดมารวย</title>
+<style>
+  :root{
+    --navy:#1a1a1a;
+    --navy-2:#2b2b2b;
+    --paper:#f4f4f2;
+    --card:#ffffff;
+    --gold:#f7941d;
+    --gold-dark:#d97706;
+    --gold-light:#fde8c8;
+    --ink:#1a1a1a;
+    --ink-soft:#6b6b6b;
+    --line:#dcdcdc;
+    --new:#4a4a4a;
+    --new-bg:#eeeeee;
+    --classic:#b45309;
+    --classic-bg:#fdecd3;
+    --danger:#a13a3a;
+    font-family:"Noto Sans Thai","Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:#f5f5f3;
+    padding:2.2rem 1.5rem 2rem;
+    border-bottom:4px solid var(--gold);
+  }
+  .wrap{max-width:920px; margin:0 auto;}
+  .brand-row{
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    margin-bottom:1.1rem;
+  }
+  .brand-row svg{flex-shrink:0;}
+  .brand-name{
+    font-family:Georgia,serif;
+    font-size:1.05rem;
+    letter-spacing:.03em;
+    color:#f5f5f3;
+  }
+  .brand-name b{color:var(--gold);}
+  header .eyebrow{
+    font-size:.8rem;
+    letter-spacing:.04em;
+    color:var(--gold-light);
+    margin:0 0 .4rem;
+    font-weight:600;
+  }
+  header h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-weight:400;
+    font-size:2rem;
+    margin:0 0 .6rem;
+  }
+  header p{
+    margin:0;
+    color:#d8d2c2;
+    font-size:.98rem;
+    max-width:640px;
+  }
+  main{max-width:920px; margin:0 auto; padding:1.75rem 1.5rem 4rem;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:1.6rem;
+    margin-bottom:1.5rem;
+  }
+
+  h2.section-title{
+    font-family:Georgia,serif;
+    font-weight:400;
+    font-size:1.3rem;
+    margin:0 0 1.1rem;
+    color:var(--navy);
+  }
+
+  .field{margin-bottom:1.15rem;}
+  .field label.field-label{
+    display:block;
+    font-size:.88rem;
+    font-weight:600;
+    color:var(--navy);
+    margin-bottom:.4rem;
+  }
+  input[type="number"], input[type="text"], select{
+    width:100%;
+    padding:.55rem .7rem;
+    border:1px solid #c9c2ac;
+    border-radius:6px;
+    font-size:.95rem;
+    background:#fffdf8;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  input[type="number"]{max-width:140px;}
+  input:focus, select:focus{
+    outline:2px solid var(--gold-dark);
+    outline-offset:1px;
+  }
+
+  .grid-check{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:.5rem .9rem;
+  }
+  .chip-label{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    font-size:.92rem;
+    padding:.3rem 0;
+  }
+  .chip-label input{width:16px; height:16px; accent-color:var(--navy-2);}
+
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:1.15rem;}
+  @media (max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  .err-msg{
+    font-size:.85rem;
+    color:var(--danger);
+    margin-top:.4rem;
+    display:none;
+  }
+
+  button.primary{
+    background:var(--gold-dark);
+    color:#fffaf0;
+    border:none;
+    padding:.85rem 1.6rem;
+    font-size:.98rem;
+    font-weight:600;
+    border-radius:7px;
+    cursor:pointer;
+    margin-top:.5rem;
+  }
+  button.primary:hover{background:var(--gold);}
+  button.primary:active{transform:scale(0.99);}
+
+  .note-box{
+    background:var(--classic-bg);
+    border:1px solid #e3cfa2;
+    border-radius:8px;
+    padding:.9rem 1.1rem;
+    font-size:.85rem;
+    color:#5b4322;
+    margin-top:1rem;
+  }
+  .note-box strong{color:var(--classic);}
+
+  /* results */
+  #results-wrap{display:none;}
+  .results-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:.5rem;
+    margin-bottom:1rem;
+  }
+  .results-head h2{margin:0;}
+  .results-count{font-size:.85rem; color:var(--ink-soft);}
+
+  .book-list{display:flex; flex-direction:column; gap:1rem;}
+  .book-card{
+    display:flex;
+    gap:1.1rem;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:1.1rem;
+  }
+  @media (max-width:560px){
+    .book-card{flex-direction:column;}
+  }
+  .book-cover{
+    width:88px;
+    min-width:88px;
+    height:124px;
+    object-fit:cover;
+    border-radius:4px;
+    background:#ddd6c2;
+    border:1px solid var(--line);
+  }
+  @media (max-width:560px){
+    .book-cover{width:100%; height:150px;}
+  }
+  .book-body{flex:1; min-width:0;}
+  .book-title{
+    font-family:Georgia,serif;
+    font-size:1.05rem;
+    margin:0 0 .15rem;
+    color:var(--navy);
+  }
+  .book-title a{color:inherit; text-decoration:none;}
+  .book-title a:hover{text-decoration:underline;}
+  .book-author{
+    font-size:.82rem;
+    color:var(--ink-soft);
+    margin:0 0 .55rem;
+  }
+  .badge-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    margin-bottom:.6rem;
+  }
+  .badge{
+    font-size:.72rem;
+    font-weight:600;
+    padding:.2rem .55rem;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge.diff-1{background:#eeeeee; color:#3a3a3a;}
+  .badge.diff-2{background:var(--gold-light); color:#8a4c05;}
+  .badge.diff-3{background:#e6e6e6; color:#1a1a1a; border:1px solid #bbb;}
+  .badge.era-new{background:#fdecd3; color:var(--gold-dark);}
+  .badge.era-classic{background:#e9e9e9; color:#3a3a3a;}
+  .badge.media{background:#f0f0ee; color:#4a4a4a;}
+
+  .book-synopsis{
+    font-size:.88rem;
+    color:var(--ink);
+    margin:0 0 .6rem;
+  }
+  .status-line{
+    font-size:.78rem;
+    color:var(--ink-soft);
+    border-top:1px dashed var(--line);
+    padding-top:.5rem;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:.4rem;
+  }
+  .status-line a{color:var(--gold-dark); font-weight:600; text-decoration:none;}
+  .status-line a:hover{text-decoration:underline;}
+
+  .fallback-box{
+    background:#eef3f6;
+    border:1px solid #d3e1e8;
+    border-radius:8px;
+    padding:1rem 1.1rem;
+    font-size:.87rem;
+    margin-top:.5rem;
+  }
+  .fallback-box a{color:var(--navy-2); font-weight:600;}
+
+  .restart{
+    background:transparent;
+    border:1px solid var(--gold-dark);
+    color:var(--navy);
+    padding:.5rem 1rem;
+    border-radius:6px;
+    font-size:.85rem;
+    cursor:pointer;
+  }
+  .restart:hover{background:var(--gold-light);}
+
+  footer{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 1.5rem 3rem;
+    font-size:.78rem;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand-row">
+      <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="สัญลักษณ์ห้องสมุดมารวย รูปหนังสือเปิด">
+        <circle cx="24" cy="24" r="23" fill="#f7941d"/>
+        <path d="M24 14c-3.6-2.2-8-3-12-2v18c4 -1 8.4 -0.2 12 2 3.6-2.2 8-3 12-2V12c-4-1-8.4-0.2-12 2z" fill="#1a1a1a"/>
+        <path d="M24 14v18" stroke="#f7941d" stroke-width="1.4"/>
+      </svg>
+      <span class="brand-name"><b>MARUEY</b> LIBRARY</span>
+    </div>
+    <p class="eyebrow">MARUEY KNOWLEDGE &amp; RESOURCE CENTER</p>
+    <h1>โปรแกรมแนะนำหนังสือส่วนบุคคล</h1>
+    <p>กรอกอายุ ความสนใจ ประสบการณ์ และภูมิหลังของคุณ เพื่อรับคำแนะนำหนังสือจากห้องสมุดมารวย พร้อมระดับความยาก-ง่ายและช่องทางตรวจสอบสถานะจริง</p>
+  </div>
+</header>
+
+<main>
+
+  <div class="card" id="form-card">
+    <h2 class="section-title">ข้อมูลของคุณ</h2>
+
+    <div class="row2">
+      <div class="field">
+        <label class="field-label" for="age">อายุ</label>
+        <input type="number" id="age" min="5" max="100" placeholder="เช่น 28">
+      </div>
+      <div class="field">
+        <label class="field-label" for="experience">ระดับประสบการณ์ในหมวดที่สนใจ</label>
+        <select id="experience">
+          <option value="beginner">มือใหม่ เพิ่งเริ่มศึกษา</option>
+          <option value="intermediate" selected>มีพื้นฐานปานกลาง</option>
+          <option value="advanced">มีประสบการณ์ / เชี่ยวชาญ</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">หมวดที่สนใจ (เลือกได้มากกว่า 1)</label>
+      <div class="grid-check" id="interests">
+        <label class="chip-label"><input type="checkbox" value="finance" checked>การเงินส่วนบุคคล / การลงทุน</label>
+        <label class="chip-label"><input type="checkbox" value="business">ธุรกิจ / การบริหาร</label>
+        <label class="chip-label"><input type="checkbox" value="self">พัฒนาตนเอง</label>
+        <label class="chip-label"><input type="checkbox" value="psych">จิตวิทยา</label>
+        <label class="chip-label"><input type="checkbox" value="lang">ภาษา</label>
+        <label class="chip-label"><input type="checkbox" value="lit">วรรณกรรม / นวนิยาย</label>
+        <label class="chip-label"><input type="checkbox" value="history">ประวัติศาสตร์</label>
+        <label class="chip-label"><input type="checkbox" value="tech">เทคโนโลยี</label>
+        <label class="chip-label"><input type="checkbox" value="health">สุขภาพ</label>
+      </div>
+      <input type="text" id="interest-other" placeholder="หมวดอื่นๆ (ถ้ามี)" style="margin-top:.6rem;">
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="background">ภูมิหลัง / อาชีพ</label>
+      <input type="text" id="background" placeholder="เช่น นักศึกษา, พนักงานบริษัท, ผู้บริหาร, เจ้าของธุรกิจ, ครู">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="field-label">รูปแบบสื่อที่ต้องการ</label>
+        <div class="grid-check" id="media">
+          <label class="chip-label"><input type="checkbox" value="book" checked>หนังสือเล่ม</label>
+          <label class="chip-label"><input type="checkbox" value="ebook" checked>eBook</label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="newold">สัดส่วนใหม่ / คลาสสิก</label>
+        <select id="newold">
+          <option value="new">เน้นหนังสือใหม่เป็นหลัก</option>
+          <option value="mix" selected>ผสมทั้งใหม่และคลาสสิก</option>
+          <option value="classic">เน้นคลาสสิก / ยอดนิยมตลอดกาล</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="count">จำนวนเล่มที่ต้องการให้แนะนำ</label>
+      <select id="count" style="max-width:160px;">
+        <option value="4">4 เล่ม</option>
+        <option value="6" selected>6 เล่ม</option>
+        <option value="10">10 เล่ม</option>
+      </select>
+    </div>
+
+    <div class="err-msg" id="err-msg">กรุณากรอกอายุ และเลือกหมวดที่สนใจอย่างน้อย 1 หมวด</div>
+
+    <button class="primary" id="submit-btn">แนะนำหนังสือให้ฉัน</button>
+
+    <div class="note-box">
+      <strong>หมายเหตุ:</strong> ข้อมูลหนังสือในโปรแกรมนี้เป็นตัวอย่างที่คัดมาจากรายการที่เปิดเผยต่อสาธารณะบน maruey.com (ณ ก.ย. 2569) เพื่อสาธิตการทำงาน สถานะการยืม-คืนแบบเรียลไทม์และรายการฉบับเต็มต้อง <a href="https://www.maruey.com/login" target="_blank" rel="noopener">เข้าสู่ระบบสมาชิกมารวย</a> จึงจะเห็นค่าล่าสุด รายชื่อหนังสือคลาสสิกด้านการเงิน/ธุรกิจในโปรแกรมนี้อ้างอิงแนวทางจากลิสต์ที่ได้รับการยอมรับ เช่น Financial Times &amp; McKinsey Business Book of the Year และ Investopedia's Best Investing Books เป็นกรอบคร่าวๆ ประกอบการคัดเลือก
+    </div>
+  </div>
+
+  <div id="results-wrap">
+    <div class="results-head">
+      <h2 class="section-title" style="margin:0;">หนังสือที่แนะนำสำหรับคุณ</h2>
+      <span class="results-count" id="results-count"></span>
+    </div>
+    <div class="book-list" id="book-list"></div>
+    <div class="fallback-box" id="fallback-box" style="display:none;"></div>
+    <div style="margin-top:1.5rem;">
+      <button class="restart" id="restart-btn">ปรับข้อมูลใหม่</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  ข้อมูลหนังสือ &amp; รูปปก © The Stock Exchange of Thailand, Maruey Knowledge &amp; Resource Center — โปรแกรมนี้เป็นเครื่องมือช่วยแนะนำเบื้องต้นเท่านั้น กรุณายืนยันรายละเอียดและสถานะที่ <a href="https://www.maruey.com" target="_blank" rel="noopener">maruey.com</a>
+</footer>
+
+<script>
+const BOOKS = [
+  {
+    id:"6a95b32978366", title:"The price of becoming: the compounding practices of high performance",
+    author:"Ryan Hawk", type:"book", cats:["self","business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31751/31751-fc-a.jpg",
+    synopsis:"สรุปแนวคิดจากบทสนทนากับผู้นำและนักกีฬาระดับสูงหลายร้อยคน ว่าอะไรที่ทำให้คนกลุ่มนี้พัฒนาตัวเองได้อย่างต่อเนื่อง เน้นย้ำว่าความก้าวหน้าที่แท้จริงมาจากพฤติกรรมเล็กๆ ที่ทำซ้ำสม่ำเสมอ ไม่ใช่ทางลัด",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"6a95b32836da5", title:"On board: the modern playbook for corporate governance",
+    author:"Jonathan F. Foster", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31746/31746-fc-a.jpg",
+    synopsis:"คู่มือสำหรับกรรมการบริษัทยุคใหม่ ว่าด้วยบทบาท ความรับผิดชอบ และแนวทางกำกับดูแลกิจการที่ทันกับความเปลี่ยนแปลงของธุรกิจและกฎเกณฑ์ในปัจจุบัน",
+    difficulty:3, era:"new", year:"2026"
+  },
+  {
+    id:"6a95b325c4e5f", title:"The imperfect board member: discovering the seven disciplines of governance excellence",
+    author:"Jim Brown", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31748/31748-fc-a.jpg",
+    synopsis:"ชี้ให้เห็นว่ากรรมการบริษัทที่ทำงานได้ดีไม่จำเป็นต้องสมบูรณ์แบบ แต่ต้องฝึกฝนวินัย 7 ข้อที่ช่วยให้การกำกับดูแลกิจการมีประสิทธิภาพจริง",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"6a95b31e7f9a1", title:"The art and practice of corporate governance",
+    author:"David F. Larcker และ Brian Tayan", type:"book", cats:["business","finance"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31749/31749-fc-a.jpg",
+    synopsis:"งานเขียนจากนักวิชาการ Stanford ที่รวมกรณีศึกษาจริงเรื่องธรรมาภิบาลองค์กร เหมาะกับผู้ที่ต้องการความเข้าใจเชิงลึกมากกว่าภาพรวมทั่วไป",
+    difficulty:3, era:"new", year:"2026"
+  },
+  {
+    id:"6a95b31ac465c", title:"Purpose under pressure: the governance conversations boards need now",
+    author:"Janet Attwood", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31747/31747-fc-a.jpg",
+    synopsis:"ว่าด้วยบทสนทนาที่คณะกรรมการบริษัทควรพูดคุยกันในยุคที่แรงกดดันด้าน ESG และผู้มีส่วนได้เสียเพิ่มขึ้น เพื่อไม่ให้องค์กรหลุดจากเป้าหมายที่แท้จริง",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"6a992b0e12a9e", title:"คณิตศาสตร์การเงินและการประยุกต์",
+    author:"คณาจารย์ด้านการเงิน", type:"ebook", cats:["finance"],
+    cover:"https://maruey.com/storage/ebook/32804/KOSTdr05yjCYa4NREX58lkCXoAHAbmbp7Bq3vNmu.jpg",
+    synopsis:"ตำราอธิบายหลักคณิตศาสตร์การเงิน เช่น มูลค่าเงินตามเวลา ดอกเบี้ย และการประเมินมูลค่าสินทรัพย์ พร้อมตัวอย่างการประยุกต์ใช้จริง เหมาะกับผู้ที่มีพื้นฐานคณิตศาสตร์มาก่อน",
+    difficulty:3, era:"new", year:"2026"
+  },
+  {
+    id:"69e9c5bde325b", title:"6C สูตรสำเร็จและความล้มเหลวของธุรกิจครอบครัวไทย",
+    author:"ผู้เชี่ยวชาญธุรกิจครอบครัว", type:"ebook", cats:["business","finance"],
+    cover:"https://maruey.com/storage/ebook/32053/EGc5kNfMKSM4d3eUw54O62ztdcTgWyIIPMJGvfrD.jpg",
+    synopsis:"ถอดบทเรียนจากธุรกิจครอบครัวไทยและระดับโลก สรุปเป็นหลัก 6C ที่อธิบายทั้งปัจจัยความสำเร็จและสาเหตุที่ธุรกิจครอบครัวจำนวนมากไปต่อไม่ได้",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"6867770956b1f", title:"ทุกคนมีสิทธิ์ร่ำรวย: คู่มือก้าวสู่อิสรภาพทางการเงิน",
+    author:"นักเขียนด้านการเงินส่วนบุคคล", type:"ebook", cats:["finance"],
+    cover:"https://maruey.com/storage/ebook/29185/vgVbJ6dIGf7bNwq906Bm6GohweAQofSX7bx9I6fD_1751611145_002996-cover.png",
+    synopsis:"หนังสือแนะแนวทางวางแผนการเงินส่วนบุคคลแบบเข้าใจง่าย เหมาะสำหรับผู้เริ่มต้นที่อยากปูพื้นฐานเรื่องการออมและการสร้างอิสรภาพทางการเงิน",
+    difficulty:1, era:"new", year:"2026"
+  },
+  {
+    id:"686776f69b7d5", title:"องค์กรที่มีแต่ความมั่งคั่ง",
+    author:"นักเขียนด้านธุรกิจ", type:"ebook", cats:["business","finance"],
+    cover:"https://maruey.com/storage/ebook/29181/PEMJ4bg7VR275k7Z791spTmuMxJW4k3VPnsSWkB2_1751611126_002993-cover.jpg",
+    synopsis:"พูดถึงแนวคิดการบริหารองค์กรให้เติบโตอย่างมั่นคง โดยผสานมุมมองด้านการเงินเข้ากับวัฒนธรรมองค์กรและการบริหารคน",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"686776e7effbb", title:"สู่ความสำเร็จจากฝันให้ไกลแล้วไปให้ถึง",
+    author:"นักเขียนพัฒนาตนเอง", type:"ebook", cats:["self"],
+    cover:"https://maruey.com/storage/ebook/29179/mqUy7YFIJXJWN45A4Nhjmjc8DDLuHNmfNOCtpVle_1751611112_002992-cover.jpg",
+    synopsis:"หนังสือให้กำลังใจและแนวทางตั้งเป้าหมายชีวิต เขียนด้วยภาษาที่เข้าถึงง่าย เหมาะเป็นจุดเริ่มต้นสำหรับผู้ที่กำลังมองหาแรงบันดาลใจ",
+    difficulty:1, era:"new", year:"2026"
+  },
+  {
+    id:"6a95b317a00db", title:"80,000 hours: how to have a fulfilling career that does good",
+    author:"Benjamin Todd", type:"book", cats:["self"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31750/31750-fc-a.jpg",
+    synopsis:"แนวทางวางแผนเส้นทางอาชีพระยะยาวอย่างมีหลักคิด โดยชั่งน้ำหนักระหว่างความสุขส่วนตัวกับผลกระทบเชิงบวกต่อสังคม เหมาะกับคนที่กำลังตัดสินใจเรื่องสายอาชีพ",
+    difficulty:2, era:"new", year:"2026"
+  },
+  {
+    id:"6a906d153aed2", title:"ร้านเบเกอรีคุณเพียงพอน",
+    author:"ฟุนะซะกิ, ยาสุโกะ", type:"book", cats:["lit"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31744/31744-fc-a.jpg",
+    synopsis:"นวนิยายแนวอบอุ่นใจสไตล์ญี่ปุ่น เล่าเรื่องราวผ่านร้านเบเกอรีเล็กๆ ที่เชื่อมโยงผู้คนเข้าด้วยกัน เหมาะกับผู้ที่ต้องการอ่านเพื่อผ่อนคลาย",
+    difficulty:1, era:"new", year:"2026"
+  },
+  {
+    id:"6a906d1495ca4", title:"ไปซื้อของกันเถอะ",
+    author:"โนดะ, ทาคาฮิโระ", type:"book", cats:["lit"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31743/31743-fc-a.jpg",
+    synopsis:"นวนิยายญี่ปุ่นแนวชีวิตประจำวัน ถ่ายทอดเรื่องเล็กๆ น้อยๆ ในชีวิตคนธรรมดาได้อย่างละมุน อ่านง่าย เหมาะกับเวลาว่างสั้นๆ",
+    difficulty:1, era:"new", year:"2026"
+  },
+  {
+    id:"6a8732a32b947", title:"The Introverted Leader พลังเงียบของผู้นำอินโทรเวิร์ต",
+    author:"Jennifer B. Kahnweiler", type:"book", cats:["self","psych","business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31713/31713-fc-a.jpg",
+    synopsis:"อธิบายว่าคนที่มีบุคลิกอินโทรเวิร์ตก็เป็นผู้นำที่ทรงพลังได้ โดยใช้จุดแข็งของตัวเอง เช่น การรับฟังและการคิดใคร่ครวญ แทนที่จะพยายามฝืนเป็นเอ็กซ์โทรเวิร์ต",
+    difficulty:2, era:"new", year:"2025"
+  },
+  {
+    id:"6a8732a2942dc", title:"Deadwood กิน Talent เป็นอาหาร",
+    author:"ภัทรมาศ พรวรากรณ์", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31712/31712-fc-a.jpg",
+    synopsis:"หนังสือธุรกิจไทยที่พูดถึงปัญหาพนักงานที่ไม่สร้างผลงาน (Deadwood) และผลกระทบต่อทีม พร้อมแนวทางบริหารคนเก่งไม่ให้ท้อและลาออก",
+    difficulty:2, era:"new", year:"2025"
+  },
+  {
+    id:"6a873299d9915", title:"ศิลปะใช้คนให้ทำงาน (How to Manage People)",
+    author:"Michael Armstrong", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31727/31727-fc-a.jpg",
+    synopsis:"คู่มือบริหารคนแบบครบวงจร ตั้งแต่การมอบหมายงาน การให้ฟีดแบ็ก ไปจนถึงการสร้างแรงจูงใจในทีม เขียนโดยผู้เชี่ยวชาญด้าน HR ที่มีผลงานตีพิมพ์มายาวนาน",
+    difficulty:2, era:"new", year:"2025"
+  },
+  {
+    id:"6a87329b23363", title:"Coaching by Questions ปลดล็อกศักยภาพ",
+    author:"เกรียงศักดิ์ นิรัติพัฒนะศัย", type:"book", cats:["self","business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31709/31709-fc-a.jpg",
+    synopsis:"แนะนำเทคนิคการตั้งคำถามแบบโค้ช เพื่อช่วยให้ลูกทีมหรือคนรอบตัวคิดหาคำตอบและแนวทางแก้ปัญหาด้วยตัวเอง แทนการสั่งการตรงๆ",
+    difficulty:2, era:"new", year:"2025"
+  },
+  {
+    id:"6a87329a85fec", title:"เอาความคิดในหัวออกมาวางบนโต๊ะ",
+    author:"ยามากุจิ ทาคุโร", type:"book", cats:["self","business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31706/31706-fc-a.jpg",
+    synopsis:"เทคนิคจากญี่ปุ่นในการนำความคิดในหัวออกมาเป็นภาพหรือข้อความที่จับต้องได้ ช่วยให้สื่อสารและตัดสินใจในที่ทำงานได้ชัดเจนขึ้น",
+    difficulty:1, era:"new", year:"2025"
+  },
+  {
+    id:"6a873298cc5b9", title:"ธุรกิจจริง ตัดสินกันที่ผลลัพธ์ ไม่ใช่ความขยัน (High Output Management)",
+    author:"Andrew S. Grove", type:"book", cats:["business"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31708/31708-fc-a.jpg",
+    synopsis:"ตำราการบริหารจัดการคลาสสิกโดยอดีตซีอีโอ Intel ว่าด้วยการวัดผลผลิตของทีมงาน การประชุมอย่างมีประสิทธิภาพ และการตัดสินใจเชิงบริหารที่ยังใช้ได้จริงจนถึงปัจจุบัน",
+    difficulty:3, era:"classic", year:"1983 (ฉบับแปล 2568)"
+  },
+  {
+    id:"6a833e258e91e", title:"Dear nora letters ฉบับแปลภาษาไทย",
+    author:"เจมส์ อัลเลน", type:"book", cats:["self"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31693/31693-fc-a.jpg",
+    synopsis:"รวมจดหมายแนวคิดพัฒนาตนเองจากเจมส์ อัลเลน ผู้เขียน As a Man Thinketh เน้นเรื่องพลังความคิดและการควบคุมจิตใจตนเอง",
+    difficulty:2, era:"classic", year:"ต้นฉบับต้นศตวรรษที่ 20"
+  },
+  {
+    id:"6a833e1c5d8d0", title:"Wake up and live",
+    author:"Dorothea Brande", type:"book", cats:["self"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31692/31692-fc-a.jpg",
+    synopsis:"หนังสือพัฒนาตนเองยุคคลาสสิกจากปี 1936 ที่เสนอแนวคิด 'ใช้ชีวิตราวกับไม่มีทางล้มเหลว' เพื่อเอาชนะความกลัวและความผัดวันประกันพรุ่ง ยังคงถูกอ้างอิงในหนังสือพัฒนาตนเองยุคใหม่จำนวนมาก",
+    difficulty:2, era:"classic", year:"1936"
+  },
+  {
+    id:"6a760f225bf8f", title:"As a man thinketh ฉบับแปลภาษาไทย",
+    author:"เจมส์ อัลเลน", type:"book", cats:["self"],
+    cover:"https://maruey.setgroup.or.th/bookcover/31691/31691-fc-a.jpg",
+    synopsis:"หนังสือพัฒนาตนเองระดับตำนานจากปี 1902 แก่นเรื่องคือความคิดของคนเราหล่อหลอมชีวิตและนิสัยของตัวเราเอง อ่านง่าย กระชับ เหมาะเป็นเล่มแรกสำหรับผู้เริ่มต้นสายพัฒนาตนเอง",
+    difficulty:1, era:"classic", year:"1902"
+  }
+];
+
+const CAT_LABEL = {
+  finance:"การเงิน/การลงทุน", business:"ธุรกิจ/บริหาร", self:"พัฒนาตนเอง",
+  psych:"จิตวิทยา", lang:"ภาษา", lit:"วรรณกรรม/นวนิยาย",
+  history:"ประวัติศาสตร์", tech:"เทคโนโลยี", health:"สุขภาพ"
+};
+const DIFF_LABEL = {1:"เริ่มต้น อ่านง่าย", 2:"ปานกลาง", 3:"เชิงลึก/เชี่ยวชาญ"};
+const EXP_TO_DIFF = {beginner:1, intermediate:2, advanced:3};
+
+function qs(id){return document.getElementById(id);}
+
+qs("submit-btn").addEventListener("click", function(){
+  const age = qs("age").value;
+  const interestBoxes = Array.prototype.slice.call(document.querySelectorAll("#interests input:checked"));
+  const interests = interestBoxes.map(function(el){return el.value;});
+  const otherText = qs("interest-other").value.trim();
+
+  if(!age || interests.length === 0){
+    qs("err-msg").style.display = "block";
+    return;
+  }
+  qs("err-msg").style.display = "none";
+
+  const experience = qs("experience").value;
+  const mediaBoxes = Array.prototype.slice.call(document.querySelectorAll("#media input:checked"));
+  const media = mediaBoxes.map(function(el){return el.value;});
+  const newold = qs("newold").value;
+  const count = parseInt(qs("count").value, 10);
+  const targetDiff = EXP_TO_DIFF[experience];
+
+  let scored = BOOKS.map(function(b){
+    let score = 0;
+    const catMatch = b.cats.some(function(c){return interests.indexOf(c) !== -1;});
+    if(catMatch) score += 5;
+    if(media.indexOf(b.type) !== -1) score += 2;
+    score -= Math.abs(b.difficulty - targetDiff) * 1.2;
+    if(newold === "new" && b.era === "new") score += 1.5;
+    if(newold === "classic" && b.era === "classic") score += 1.5;
+    if(newold === "mix") score += 0.3;
+    return {book:b, score:score, catMatch:catMatch};
+  });
+
+  scored = scored.filter(function(s){return s.catMatch;});
+  scored.sort(function(a,b){return b.score - a.score;});
+
+  const picked = scored.slice(0, count);
+
+  renderResults(picked, interests, otherText);
+});
+
+function renderResults(picked, interests, otherText){
+  qs("form-card").style.display = "none";
+  qs("results-wrap").style.display = "block";
+  qs("results-count").textContent = picked.length + " เล่ม จากฐานตัวอย่างของมารวย";
+
+  const list = qs("book-list");
+  list.innerHTML = "";
+
+  picked.forEach(function(item){
+    const b = item.book;
+    const diffClass = "diff-" + b.difficulty;
+    const eraClass = b.era === "new" ? "era-new" : "era-classic";
+    const eraText = b.era === "new" ? "หนังสือใหม่" : "คลาสสิก/ยอดนิยม";
+    const mediaText = b.type === "ebook" ? "eBook" : "หนังสือเล่ม";
+    const url = "https://www.maruey.com/" + b.type + "/" + b.id;
+
+    const card = document.createElement("div");
+    card.className = "book-card";
+    card.innerHTML =
+      '<img class="book-cover" src="' + b.cover + '" alt="ปกหนังสือ ' + escapeHtml(b.title) + '" loading="lazy">' +
+      '<div class="book-body">' +
+        '<p class="book-title"><a href="' + url + '" target="_blank" rel="noopener">' + escapeHtml(b.title) + '</a></p>' +
+        '<p class="book-author">โดย ' + escapeHtml(b.author) + ' &middot; ปี ' + escapeHtml(b.year) + '</p>' +
+        '<div class="badge-row">' +
+          '<span class="badge ' + diffClass + '">' + DIFF_LABEL[b.difficulty] + '</span>' +
+          '<span class="badge ' + eraClass + '">' + eraText + '</span>' +
+          '<span class="badge media">' + mediaText + '</span>' +
+        '</div>' +
+        '<p class="book-synopsis">' + escapeHtml(b.synopsis) + '</p>' +
+        '<div class="status-line">' +
+          '<span>สถานะ: ต้อง Login เพื่อดูสถานะยืม-คืนล่าสุด</span>' +
+          '<a href="' + url + '" target="_blank" rel="noopener">ดูรายละเอียด/จองคิว &rarr;</a>' +
+        '</div>' +
+      '</div>';
+    list.appendChild(card);
+  });
+
+  const fb = qs("fallback-box");
+  if(picked.length === 0){
+    const searchWord = encodeURIComponent(otherText || interests.map(function(c){return CAT_LABEL[c];}).join(" "));
+    fb.style.display = "block";
+    fb.innerHTML = "ยังไม่มีหนังสือตัวอย่างในฐานข้อมูลนี้ที่ตรงกับหมวดที่เลือกพอดี ลองค้นหาหมวดนี้แบบเรียลไทม์ได้ที่ " +
+      '<a href="https://www.maruey.com/advanced-search?word=' + searchWord + '&search_by=keyword" target="_blank" rel="noopener">ระบบค้นหาของ maruey.com</a>';
+  } else {
+    fb.style.display = "none";
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+qs("restart-btn").addEventListener("click", function(){
+  qs("results-wrap").style.display = "none";
+  qs("form-card").style.display = "block";
+});
+</script>
+
+</body>
+</html>
